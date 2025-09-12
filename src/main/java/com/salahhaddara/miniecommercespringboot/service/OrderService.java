@@ -31,7 +31,8 @@ public class OrderService {
         BigDecimal total = BigDecimal.ZERO;
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
+                    .orElseThrow(
+                            () -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
 
             if (product.getStock() < itemRequest.getQuantity()) {
                 throw new RuntimeException("Insufficient stock for product: " + product.getName());
@@ -46,20 +47,24 @@ public class OrderService {
         order.setTotal(total);
         order.setStatus(Order.OrderStatus.PENDING);
 
-        Order savedOrder = orderRepository.save(order);
-
+        // Create and attach items, cascading will persist them with the order
         for (OrderItemRequest itemRequest : request.getItems()) {
-            Product product = productRepository.findById(itemRequest.getProductId()).orElseThrow();
+            Product product = productRepository.findById(itemRequest.getProductId())
+                    .orElseThrow(
+                            () -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(savedOrder);
             orderItem.setProduct(product);
             orderItem.setQuantity(itemRequest.getQuantity());
             orderItem.setUnitPrice(product.getPrice());
             orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
 
+            order.addItem(orderItem);
+
             productService.updateProductStock(product.getId(), itemRequest.getQuantity());
         }
+
+        Order savedOrder = orderRepository.save(order);
 
         return OrderResponse.fromEntity(savedOrder);
     }

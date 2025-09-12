@@ -21,12 +21,13 @@ public class OrderResponse {
     private LocalDateTime updatedAt;
 
     public static OrderResponse fromEntity(Order order) {
+        List<OrderItemResponse> itemResponses = order.getItems() == null ? List.of()
+                : order.getItems().stream().map(OrderItemResponse::fromEntity).toList();
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .userEmail(order.getUser().getEmail())
-                .items(order.getItems().stream()
-                        .map(OrderItemResponse::fromEntity)
-                        .toList())
+                .items(itemResponses)
                 .status(order.getStatus().name())
                 .total(order.getTotal())
                 .createdAt(order.getCreatedAt())
