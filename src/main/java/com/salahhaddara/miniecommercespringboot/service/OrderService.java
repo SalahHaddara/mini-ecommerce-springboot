@@ -28,7 +28,6 @@ public class OrderService {
     public OrderResponse createOrder(OrderRequest request) {
         User currentUser = getCurrentUser();
 
-        // Calculate total and validate stock
         BigDecimal total = BigDecimal.ZERO;
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
@@ -42,7 +41,6 @@ public class OrderService {
             total = total.add(itemTotal);
         }
 
-        // Create order
         Order order = new Order();
         order.setUser(currentUser);
         order.setTotal(total);
@@ -50,7 +48,6 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // Create order items and update stock
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId()).orElseThrow();
 
@@ -61,7 +58,6 @@ public class OrderService {
             orderItem.setUnitPrice(product.getPrice());
             orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
 
-            // Update stock atomically
             productService.updateProductStock(product.getId(), itemRequest.getQuantity());
         }
 
