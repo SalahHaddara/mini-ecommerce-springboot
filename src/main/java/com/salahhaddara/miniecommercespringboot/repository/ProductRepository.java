@@ -12,4 +12,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.stock < 5")
     List<Product> findLowStockProducts();
+
+    @Query("SELECT p FROM Product p WHERE p.stock = 0")
+    List<Product> findOutOfStockProducts();
 }
